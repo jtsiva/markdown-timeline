@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Timeline Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .input-section {
+            margin-bottom: 40px;
+        }
+
+        .input-section label {
+            display: block;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 15px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .timeline-container {
+            position: relative;
+            margin-top: 40px;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 40px 0;
+            min-height: 400px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 40px;
+            bottom: 40px;
+            width: 4px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .timeline-event {
+            position: absolute;
+            width: 100%;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .timeline-event:nth-child(even) {
+            animation-delay: 0.1s;
+        }
+
+        .timeline-event:nth-child(odd) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .event-content {
+            position: relative;
+            width: 40%;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .event-content:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .timeline-event:nth-child(odd) .event-content {
+            margin-left: auto;
+            margin-right: 55%;
+        }
+
+        .timeline-event:nth-child(even) .event-content {
+            margin-left: 55%;
+        }
+
+        .event-date {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .connecting-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .timeline-event:nth-child(odd) .connecting-line {
+            left: 40%;
+            width: 10%;
+        }
+
+        .timeline-event:nth-child(even) .connecting-line {
+            right: 40%;
+            width: 10%;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .event-title {
+            color: #2d3748;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+
+        .event-body {
+            color: #4a5568;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .event-body p {
+            margin-bottom: 10px;
+        }
+
+        .event-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #feb2b2;
+        }
+
+        @media (max-width: 768px) {
+            .timeline::before {
+                left: 30px;
+            }
+
+            .event-content {
+                width: calc(100% - 80px);
+                margin-left: 60px !important;
+                margin-right: 0 !important;
+            }
+
+            .connecting-line {
+                left: 30px !important;
+                right: auto !important;
+                width: 30px !important;
+            }
+
+            .timeline-dot {
+                left: 30px;
+                transform: translateY(-50%);
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Timeline Generator</h1>
+            <p>Create beautiful timelines from markdown content</p>
+        </div>
+
+        <div class="input-section">
+            <label for="markdown-input">Markdown Content:</label>
+            <textarea id="markdown-input" placeholder="Enter your markdown content here...
+
+Example format:
+---
+Date: 2023-01-15
+Title: Project Started
+We began development of the new application with initial planning and design phases.
+
+---
+Date: 2023-03-22
+Title: First Milestone
+Completed the user interface design and began backend development.
+
+---
+Date: 2023-06-10
+Title: Beta Release
+Released the beta version to a select group of users for testing and feedback."></textarea>
+            <button class="generate-btn" onclick="generateTimeline()">Generate Timeline</button>
+        </div>
+
+        <div class="timeline-container">
+            <div id="timeline" class="timeline"></div>
+        </div>
+    </div>
+
+    <script>
+        function parseMarkdown(markdown) {
+            const events = [];
+            const sections = markdown.split('---').filter(section => section.trim());
+
+            for (const section of sections) {
+                const lines = section.trim().split('\n');
+                let date = '';
+                let title = '';
+                let body = '';
+                let bodyStarted = false;
+
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    
+                    if (trimmedLine.startsWith('Date:')) {
+                        date = trimmedLine.replace('Date:', '').trim();
+                    } else if (trimmedLine.startsWith('Title:')) {
+                        title = trimmedLine.replace('Title:', '').trim();
+                    } else if (trimmedLine && (date && title)) {
+                        bodyStarted = true;
+                        if (body) body += '\n';
+                        body += trimmedLine;
+                    }
+                }
+
+                if (date && title) {
+                    events.push({ date, title, body });
+                }
+            }
+
+            return events.sort((a, b) => new Date(a.date) - new Date(b.date));
+        }
+
+        function formatDate(dateStr) {
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        function formatBody(body) {
+            return body.split('\n').map(paragraph => 
+                paragraph.trim() ? `<p>${paragraph.trim()}</p>` : ''
+            ).join('');
+        }
+
+        function generateTimeline() {
+            const markdown = document.getElementById('markdown-input').value;
+            const timelineContainer = document.getElementById('timeline');
+
+            if (!markdown.trim()) {
+                timelineContainer.innerHTML = '<div class="error">Please enter some markdown content.</div>';
+                return;
+            }
+
+            try {
+                const events = parseMarkdown(markdown);
+
+                if (events.length === 0) {
+                    timelineContainer.innerHTML = '<div class="error">No valid events found. Make sure each event has a Date and Title.</div>';
+                    return;
+                }
+
+                // First pass: create events with temporary positioning to measure heights
+                let tempHTML = '';
+                events.forEach((event, index) => {
+                    tempHTML += `
+                        <div class="timeline-event temp-event" style="top: 0px; visibility: hidden;">
+                            <div class="event-content">
+                                <div class="event-date">${formatDate(event.date)}</div>
+                                <h3 class="event-title">${event.title}</h3>
+                                <div class="event-body">${formatBody(event.body)}</div>
+                            </div>
+                            <div class="connecting-line"></div>
+                            <div class="timeline-dot"></div>
+                        </div>
+                    `;
+                });
+
+                timelineContainer.innerHTML = tempHTML;
+
+                // Measure heights and calculate positions
+                const tempEvents = timelineContainer.querySelectorAll('.temp-event');
+                const positions = [];
+                let currentPosition = 60; // Starting position
+                const minSpacing = 40; // Minimum gap between cards
+
+                tempEvents.forEach((tempEvent, index) => {
+                    const cardHeight = tempEvent.querySelector('.event-content').offsetHeight;
+                    positions.push(currentPosition);
+                    
+                    // Next position: current position + card height + minimum spacing
+                    currentPosition += cardHeight + minSpacing;
+                });
+
+                // Set final timeline height
+                const lastPosition = positions[positions.length - 1];
+                const lastCardHeight = tempEvents[tempEvents.length - 1].querySelector('.event-content').offsetHeight;
+                const totalHeight = lastPosition + lastCardHeight + 60;
+                timelineContainer.style.minHeight = totalHeight + 'px';
+
+                // Second pass: create final positioned events
+                let finalHTML = '';
+                events.forEach((event, index) => {
+                    finalHTML += `
+                        <div class="timeline-event" style="top: ${positions[index]}px;">
+                            <div class="event-content">
+                                <div class="event-date">${formatDate(event.date)}</div>
+                                <h3 class="event-title">${event.title}</h3>
+                                <div class="event-body">${formatBody(event.body)}</div>
+                            </div>
+                            <div class="connecting-line"></div>
+                            <div class="timeline-dot"></div>
+                        </div>
+                    `;
+                });
+
+                timelineContainer.innerHTML = finalHTML;
+            } catch (error) {
+                timelineContainer.innerHTML = `<div class="error">Error parsing markdown: ${error.message}</div>`;
+            }
+        }
+
+        // Generate initial timeline with placeholder content
+        document.addEventListener('DOMContentLoaded', function() {
+            const initialMarkdown = `---
+Date: 2020-01-15
+Title: Project Conception
+The initial idea for the project was born during a brainstorming session. We identified the core problem and began researching potential solutions.
+
+---
+Date: 2020-02-01
+Title: Team Assembly
+Recruited key team members including designers, developers, and project managers. Team structure and communication protocols were established. We conducted extensive interviews to find the right talent mix and created a collaborative workspace that would foster innovation and creativity.
+
+---
+Date: 2021-06-10
+Title: MVP Development
+After extensive planning and prototyping, we began development of the minimum viable product. Core features were prioritized based on user research. This phase involved multiple iterations, user testing sessions, and technical challenges that required innovative solutions. We implemented agile methodologies and maintained close communication with stakeholders throughout the development process.
+
+---
+Date: 2023-08-15
+Title: Beta Launch
+Successfully launched the beta version to 100 selected users. Gathered valuable feedback and identified areas for improvement.
+
+---
+Date: 2024-12-01
+Title: Full Release
+Official product launch with comprehensive marketing campaign. Achieved 10,000 users in the first month and secured Series A funding. The launch exceeded all expectations with tremendous user engagement, positive reviews across all platforms, and significant media coverage that helped establish our brand in the competitive market landscape.`;
+
+            document.getElementById('markdown-input').value = initialMarkdown;
+            generateTimeline();
+        });
+    </script>
+</body>
+</html>
